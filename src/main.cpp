@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "Scene.h"
 
 int main() {
