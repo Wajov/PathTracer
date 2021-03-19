@@ -16,6 +16,9 @@ add_executable(PathTracer
 # Assimp
 find_package(assimp REQUIRED)
 
+# tinyobjloadrer
+find_package(tinyobjloader REQUIRED)
+
 # Qt
 set(QT_VERSION 5)
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
@@ -24,6 +27,7 @@ set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl")
 target_link_libraries(
         PathTracer
         assimp
+        tinyobjloader
         Qt5::Core
         Qt5::Gui
         Qt5::Widgets
