@@ -1,8 +1,11 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
+#include <cfloat>
+
 #include <QVector3D>
 
+#include "ConstantHelper.h"
 #include "Point.h"
 #include "AABB.h"
 #include "Ray.h"

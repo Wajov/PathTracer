@@ -1,5 +1,7 @@
 #include "Scene.h"
 
+Scene::Scene() {}
+
 Scene::Scene(const std::string &path) {
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace);
@@ -51,4 +53,8 @@ float Scene::trace(const Ray &ray) const {
         ans = std::min(ans, mesh.trace(ray));
 
     return ans;
+}
+
+QImage Scene::render(const QVector3D &position, const QVector3D &center, const QVector3D &up, const float fovy) {
+    return QImage();
 }

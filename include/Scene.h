@@ -10,6 +10,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <QVector3D>
+#include <QImage>
 
 #include "Point.h"
 #include "Triangle.h"
@@ -21,11 +22,13 @@ private:
     std::vector<Mesh> meshes;
     void processNode(aiNode *node, const aiScene *scene, std::string &directory);
     Mesh processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory);
+    float trace(const Ray &ray) const;
 
 public:
+    Scene();
     Scene(const std::string &path);
     ~Scene();
-    float trace(const Ray &ray) const;
+    QImage render(const QVector3D &position, const QVector3D &center, const QVector3D &up, const float fovy);
 };
 
 #endif

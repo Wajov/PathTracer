@@ -4,20 +4,21 @@ BVH::BVH(const std::vector<Triangle> &triangles) {
     for (const Triangle &triangle : triangles)
         aabb.combine(triangle.aabb());
 
-    if (triangles.size() <= MAX_NUM_TRIANGLE) {
+    if (triangles.size() <= BVH_LIMIT) {
         this->triangles = triangles;
         left = right = nullptr;
     } else {
         float x = aabb.rangeX(), y = aabb.rangeY(), z = aabb.rangeZ();
+        std::vector<Triangle> tempTriangles = triangles;
         if (x >= y && x >= z)
-            std::sort(triangles.begin(), triangles.end(), compareByX);
+            std::sort(tempTriangles.begin(), tempTriangles.end(), compareByX);
         else if (y >= x && y >= z)
-            std::sort(triangles.begin(), triangles.end(), compareByY);
+            std::sort(tempTriangles.begin(), tempTriangles.end(), compareByY);
         else
-            std::sort(triangles.begin(), triangles.end(), compareByZ);
-        auto middle = triangles.begin() + (triangles.size() / 2);
-        std::vector<Triangle> leftTriangles(triangles.begin(), middle);
-        std::vector<Triangle> rightTriangles(middle, triangles.end());
+            std::sort(tempTriangles.begin(), tempTriangles.end(), compareByZ);
+        auto middle = tempTriangles.begin() + (tempTriangles.size() / 2);
+        std::vector<Triangle> leftTriangles(tempTriangles.begin(), middle);
+        std::vector<Triangle> rightTriangles(middle, tempTriangles.end());
         left = new BVH(leftTriangles);
         right = new BVH(rightTriangles);
     }

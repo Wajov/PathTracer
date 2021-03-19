@@ -5,13 +5,13 @@
 #include <algorithm>
 #include <vector>
 
+#include "ConstantHelper.h"
 #include "Triangle.h"
 #include "AABB.h"
 #include "Ray.h"
 
 class BVH {
 private:
-    const int MAX_NUM_TRIANGLE = 1;
     AABB aabb;
     std::vector<Triangle> triangles;
     BVH *left, *right;

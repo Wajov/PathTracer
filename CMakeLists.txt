@@ -5,6 +5,7 @@ set(CMAKE_AUTOMOC ON)
 
 include_directories(include)
 set(HEADER
+        include/ConstantHelper.h
         include/Point.h
         include/Triangle.h
         include/AABB.h
@@ -12,6 +13,7 @@ set(HEADER
         include/Mesh.h
         include/Scene.h
         include/Ray.h
+        include/RenderWidget.h
 )
 aux_source_directory(src SOURCE)
 add_executable(PathTracer

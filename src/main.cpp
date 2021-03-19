@@ -1,6 +1,11 @@
-#include "Scene.h"
+#include <QApplication>
 
-int main() {
-    Scene scene("scene/cornellbox/cornellbox.obj");
-    return 0;
+#include "RenderWidget.h"
+
+int main(int argc, char **argv) {
+    QApplication application(argc, argv);
+    RenderWidget renderer;
+    renderer.show();
+
+    return QApplication::exec();
 }
