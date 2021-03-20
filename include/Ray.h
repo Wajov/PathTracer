@@ -12,6 +12,7 @@ public:
     ~Ray();
     QVector3D getOrigin() const;
     QVector3D getDirection() const;
+    QVector3D point(const float t) const;
 };
 
 #endif

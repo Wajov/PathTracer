@@ -13,3 +13,7 @@ QVector3D Ray::getOrigin() const {
 QVector3D Ray::getDirection() const {
     return direction;
 }
+
+QVector3D Ray::point(const float t) const {
+    return origin + t * direction;
+}

@@ -24,6 +24,12 @@ BVH::BVH(const std::vector<Triangle> &triangles) {
     }
 }
 
+BVH::BVH(const BVH &bvh) :
+aabb(bvh.aabb),
+triangles(bvh.triangles),
+left(bvh.left == nullptr ? nullptr : new BVH(*bvh.left)),
+right(bvh.right == nullptr ? nullptr : new BVH(*bvh.right)) {}
+
 BVH::~BVH() {
     delete left;
     delete right;

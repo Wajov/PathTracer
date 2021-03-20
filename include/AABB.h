@@ -7,7 +7,6 @@
 #include <QVector3D>
 
 #include "ConstantHelper.h"
-#include "Point.h"
 #include "Ray.h"
 
 class AABB {
@@ -17,7 +16,7 @@ private:
 public:
     AABB();
     ~AABB();
-    void add(const Point &point);
+    void add(const QVector3D &point);
     void combine(const AABB &aabb);
     float rangeX() const;
     float rangeY() const;

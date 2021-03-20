@@ -47,14 +47,44 @@ Mesh Scene::processMesh(aiMesh *mesh, const aiScene *scene, std::string &directo
     return Mesh(triangles, diffuse, specular, emissive, shininess);
 }
 
-float Scene::trace(const Ray &ray) const {
-    float ans = FLT_MAX;
-    for (const Mesh &mesh : meshes)
-        ans = std::min(ans, mesh.trace(ray));
+QColor Scene::trace(const Ray &ray) const {
+    float t = FLT_MAX;
+    int index = -1;
+    for (int i = 0; i < meshes.size(); i++) {
+        float tmp = meshes[i].trace(ray);
+        if (tmp < t) {
+            t = tmp;
+            index = i;
+        }
+    }
 
-    return ans;
+    return index >= 0 ? shade(ray.point(t), index) : QColor(0, 0, 0);
 }
 
-QImage Scene::render(const QVector3D &position, const QVector3D &center, const QVector3D &up, const float fovy) {
-    return QImage();
+QColor Scene::shade(const QVector3D &point, const int index) const {
+    QVector3D color = meshes[index].getDiffuse() + meshes[index].getSpecular();
+    color.setX(std::min(color.x(), 1.0f));
+    color.setY(std::min(color.y(), 1.0f));
+    color.setZ(std::min(color.z(), 1.0f));
+
+    return QColor((int)(color.x() * 255), (int)(color.y() * 255), (int)(color.z() * 255));
+}
+
+QImage Scene::render(const QVector3D &position, const QVector3D &center, const QVector3D &up, const float fovy, const int width, const int height) {
+    QVector3D f = (center - position).normalized();
+    QVector3D u = up.normalized();
+    QVector3D l = QVector3D::crossProduct(u, f);
+    float k = std::tan(fovy / 180.0f * PI) / (float)height;
+    QVector3D du = u * k;
+    QVector3D dl = l * k;
+    QVector3D o = position + f + du * (float)height + dl * (float)width * 0.5f;
+
+    QImage ans(width, height, QImage::Format_RGB32);
+    for (int i = 0; i < width; i++)
+        for (int j = 0; j < height; j++) {
+            QVector3D d = (o - dl * ((float)i + 0.5f) - du * ((float)j + 0.5f) - position).normalized();
+            ans.setPixel(i, j, trace(Ray(position, d)).rgb());
+        }
+
+    return ans;
 }

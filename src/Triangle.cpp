@@ -14,9 +14,9 @@ QVector3D Triangle::getCenter() const {
 
 AABB Triangle::aabb() const {
     AABB ans;
-    ans.add(p0);
-    ans.add(p1);
-    ans.add(p2);
+    ans.add(p0.getPosition());
+    ans.add(p1.getPosition());
+    ans.add(p2.getPosition());
     return ans;
 }
 

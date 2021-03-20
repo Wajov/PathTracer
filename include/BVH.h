@@ -21,6 +21,7 @@ private:
 
 public:
     BVH(const std::vector<Triangle> &triangles);
+    BVH(const BVH &bvh);
     ~BVH();
     float trace(const Ray &ray) const;
 };
