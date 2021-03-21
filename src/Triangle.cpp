@@ -20,7 +20,7 @@ AABB Triangle::aabb() const {
     return ans;
 }
 
-float Triangle::trace(const Ray &ray) const {
+void Triangle::trace(const Ray &ray, float &t, QVector3D &normal) const {
     QVector3D o = ray.getOrigin();
     QVector3D d = ray.getDirection();
     QVector3D e1 = p1.getPosition() - p0.getPosition();
@@ -31,10 +31,15 @@ float Triangle::trace(const Ray &ray) const {
 
     float w = QVector3D::dotProduct(e1, s2);
     if (w < EPSILON)
-        return FLT_MAX;
-
-    float t = QVector3D::dotProduct(e2, s1) / w;
-    float u = QVector3D::dotProduct(s, s2) / w;
-    float v = QVector3D::dotProduct(d, s1) / w;
-    return u >= 0.0f && v >= 0.0f && u + v <= 1.0f && t >= 0.0f ? t : FLT_MAX;
+        t = FLT_MAX;
+    else {
+        float tTemp = QVector3D::dotProduct(e2, s1) / w;
+        float u = QVector3D::dotProduct(s, s2) / w;
+        float v = QVector3D::dotProduct(d, s1) / w;
+        if (tTemp >= 0.0f && u >= 0.0f && v >= 0.0f && u + v <= 1.0f) {
+            t = tTemp;
+            normal = ((1.0f - u - v) * p0.getNormal() + u * p1.getNormal() + v * p2.getNormal()).normalized();
+        } else
+            t = FLT_MAX;
+    }
 }

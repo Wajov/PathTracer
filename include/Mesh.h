@@ -5,22 +5,19 @@
 
 #include "Triangle.h"
 #include "BVH.h"
+#include "Material.h"
 #include "Ray.h"
 
 class Mesh {
 private:
-    QVector3D diffuse, specular, emissive;
-    float shininess;
     BVH bvh;
+    Material material;
 
 public:
-    Mesh(const std::vector<Triangle> &triangles, const QVector3D &diffuse, const QVector3D &specular, const QVector3D &emissive, const float shininess);
+    Mesh(const std::vector<Triangle> &triangles, const Material &material);
     ~Mesh();
-    QVector3D getDiffuse() const;
-    QVector3D getSpecular() const;
-    QVector3D getEmissive() const;
-    float getShininess() const;
-    float trace(const Ray &ray) const;
+    Material getMaterial() const;
+    void trace(const Ray &ray, float &t, QVector3D &normal) const;
 };
 
 #endif

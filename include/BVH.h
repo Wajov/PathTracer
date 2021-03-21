@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <vector>
 
+#include <QVector3D>
+
 #include "ConstantHelper.h"
 #include "Triangle.h"
 #include "AABB.h"
@@ -23,7 +25,7 @@ public:
     BVH(const std::vector<Triangle> &triangles);
     BVH(const BVH &bvh);
     ~BVH();
-    float trace(const Ray &ray) const;
+    void trace(const Ray &ray, float &t, QVector3D &normal) const;
 };
 
 #endif

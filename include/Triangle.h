@@ -20,7 +20,7 @@ public:
     ~Triangle();
     QVector3D getCenter() const;
     AABB aabb() const;
-    float trace(const Ray &ray) const;
+    void trace(const Ray &ray, float &t, QVector3D &normal) const;
 };
 
 #endif

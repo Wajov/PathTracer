@@ -15,8 +15,10 @@
 #include <QColor>
 
 #include "ConstantHelper.h"
+#include "SampleHelper.h"
 #include "Point.h"
 #include "Triangle.h"
+#include "Material.h"
 #include "Mesh.h"
 #include "Ray.h"
 
@@ -25,8 +27,8 @@ private:
     std::vector<Mesh> meshes;
     void processNode(aiNode *node, const aiScene *scene, std::string &directory);
     Mesh processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory);
-    QColor trace(const Ray &ray) const;
-    QColor shade(const QVector3D &point, const int index) const;
+    void trace(const Ray &ray, float &t, QVector3D &normal, Material &material) const;
+    QVector3D shade(const Ray &ray) const;
 
 public:
     Scene();

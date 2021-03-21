@@ -1,30 +1,15 @@
 #include "Mesh.h"
 
-Mesh::Mesh(const std::vector<Triangle> &triangles, const QVector3D &diffuse, const QVector3D &specular, const QVector3D &emissive, const float shininess) :
+Mesh::Mesh(const std::vector<Triangle> &triangles, const Material &material) :
 bvh(triangles),
-diffuse(diffuse),
-specular(specular),
-emissive(emissive),
-shininess(shininess) {}
+material(material) {}
 
 Mesh::~Mesh() {}
 
-QVector3D Mesh::getDiffuse() const {
-    return diffuse;
+Material Mesh::getMaterial() const {
+    return material;
 }
 
-QVector3D Mesh::getSpecular() const {
-    return specular;
-}
-
-QVector3D Mesh::getEmissive() const {
-    return emissive;
-}
-
-float Mesh::getShininess() const {
-    return shininess;
-}
-
-float Mesh::trace(const Ray &ray) const {
-    return bvh.trace(ray);
+void Mesh::trace(const Ray &ray, float &t, QVector3D &normal) const {
+    return bvh.trace(ray, t, normal);
 }
