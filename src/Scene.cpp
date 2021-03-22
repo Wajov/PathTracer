@@ -1,5 +1,4 @@
 #include "Scene.h"
-#include <iostream>
 
 Scene::Scene() {}
 
@@ -78,7 +77,7 @@ QVector3D Scene::shade(const Ray &ray) const {
     QVector3D position = ray.point(t);
     QVector3D reflection = ray.reflect(normal);
 
-    QVector3D ans = material.getEmissive();
+    QVector3D ans = material.getEmissive() / (PI * 4.0f);
     for (const Mesh &light : lights) {
         QVector3D sum(0.0f, 0.0f, 0.0f);
         for (int i = 0; i < SAMPLE_PER_LIGHT; i++) {
@@ -91,9 +90,8 @@ QVector3D Scene::shade(const Ray &ray) const {
             Material materialTemp;
             trace(rayTemp, tTemp, normalTemp, materialTemp);
 
-//            std::cout << tTemp << std::endl;
             if ((rayTemp.point(tTemp) - sample.getPosition()).lengthSquared() < EPSILON) {
-                QVector3D brdf = material.brdf(normal, reflection, direction);
+                QVector3D brdf = randomUniform() <= material.getThreshold() ? material.diffuseBRDF(normal, direction) : material.specularBRDF(reflection, direction);
                 float cosine0 = QVector3D::dotProduct(normal, direction);
                 float cosine1 = QVector3D::dotProduct(sample.getNormal(), -direction);
                 sum += light.getMaterial().getEmissive() * brdf * cosine0 * cosine1 / (sample.getPosition() - position).lengthSquared() * light.getArea();
@@ -103,13 +101,28 @@ QVector3D Scene::shade(const Ray &ray) const {
     }
 
     if (randomUniform() < RUSSIAN_ROULETTE) {
-        std::pair<float, float> pair = sampleHemisphere();
-        QVector3D tangent = std::fabs(normal.x()) < EPSILON && std::fabs(normal.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(normal.y(), -normal.x(), 0.0f).normalized();
-        QVector3D bitangent = QVector3D::crossProduct(tangent, normal);
-        QVector3D direction = (std::cos(pair.first) * normal + std::sin(pair.first) * std::cos(pair.second) * tangent + std::sin(pair.first) * std::sin(pair.second) * bitangent).normalized();
-        QVector3D brdf = material.brdf(normal, reflection, direction);
+        float theta, phi, pdf;
+        QVector3D direction, brdf;
+        if (randomUniform() <= material.getThreshold()) {
+            sampleHemisphere(1.0f, theta, phi, pdf);
+            float cosine = std::cos(theta);
+            float sine = std::sin(theta);
+            QVector3D tangent = std::fabs(normal.x()) < EPSILON && std::fabs(normal.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(normal.y(), -normal.x(), 0.0f).normalized();
+            QVector3D bitangent = QVector3D::crossProduct(tangent, normal);
+            direction = cosine * normal + sine * std::cos(phi) * tangent + sine * std::sin(phi) * bitangent;
+            brdf = material.diffuseBRDF(normal, direction);
+        } else {
+            sampleHemisphere(material.getShininess(), theta, phi, pdf);
+            float cosine = std::cos(theta);
+            float sine = std::sin(theta);
+            QVector3D tangent = std::fabs(reflection.x()) < EPSILON && std::fabs(reflection.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(reflection.y(), -reflection.x(), 0.0f).normalized();
+            QVector3D bitangent = QVector3D::crossProduct(tangent, reflection);
+            direction = cosine * reflection + sine * std::cos(phi) * tangent + sine * std::sin(phi) * bitangent;
+            brdf = material.specularBRDF(reflection, direction);
+        }
 
-        ans += shade(Ray(position, direction)) * brdf * std::cos(pair.first) * PI * 2.0f / RUSSIAN_ROULETTE;
+        float cosine = QVector3D::dotProduct(normal, direction);
+        ans += shade(Ray(position, direction)) * brdf * cosine / (pdf * RUSSIAN_ROULETTE);
     }
 
     return ans;
@@ -129,8 +142,9 @@ QImage Scene::render(const QVector3D &position, const QVector3D &center, const Q
         for (int j = 0; j < height; j++) {
             QVector3D avg(0.0f, 0.0f, 0.0f);
             for (int k = 0; k < SAMPLE_PER_PIXEL; k++) {
-                std::pair<float, float> pair = samplePixel();
-                QVector3D direction = (o - dl * ((float) i + pair.first) - du * ((float) j + pair.second) - position).normalized();
+                float x, y;
+                samplePixel(x, y);
+                QVector3D direction = (o - dl * ((float) i + x) - du * ((float) j + y) - position).normalized();
                 avg += shade(Ray(position, direction));
             }
             avg /= SAMPLE_PER_PIXEL;

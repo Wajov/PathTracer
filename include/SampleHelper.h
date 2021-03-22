@@ -14,12 +14,15 @@ static float randomUniform() {
     return uniform(engine);
 }
 
-static std::pair<float, float> samplePixel() {
-    return std::make_pair(randomUniform(), randomUniform());
+static void samplePixel(float &x, float &y) {
+    x = randomUniform();
+    y = randomUniform();
 }
 
-static std::pair<float, float> sampleHemisphere() {
-    return std::make_pair(std::acos(randomUniform()), randomUniform() * PI * 2.0f);
+static void sampleHemisphere(const float exp, float &theta, float &phi, float &pdf) {
+    theta = std::acos(std::pow(randomUniform(), 1.0f / (exp + 1)));
+    phi = randomUniform() * PI * 2.0f;
+    pdf = std::pow(std::cos(theta), exp) * std::sin(theta) * (exp + 1) / (PI * 2.0f);
 }
 
 #endif

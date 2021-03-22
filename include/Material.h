@@ -10,14 +10,17 @@
 class Material {
 private:
     QVector3D diffuse, specular, emissive;
-    float shininess;
+    float shininess, threshold;
 
 public:
     Material();
     Material(const QVector3D &diffuse, const QVector3D &specular, const QVector3D &emissive, const float shininess);
     ~Material();
     QVector3D getEmissive() const;
-    QVector3D brdf(const QVector3D &normal, const QVector3D &reflection, const QVector3D &direction) const;
+    float getShininess() const;
+    float getThreshold() const;
+    QVector3D diffuseBRDF(const QVector3D &normal, const QVector3D &direction) const;
+    QVector3D specularBRDF(const QVector3D &reflection, const QVector3D &direction) const;
 };
 
 #endif

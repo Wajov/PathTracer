@@ -42,25 +42,25 @@ float AABB::rangeZ() const {
 
 bool AABB::trace(const Ray &ray) const {
     QVector3D o = ray.getOrigin(), d = ray.getDirection();
-    float t0 = -FLT_MAX, t1 = FLT_MAX;
+    float t0 = 0.0f, t1 = FLT_MAX;
 
     if (std::fabs(d.x()) > EPSILON) {
-        t0 = std::max(t0, (d.x() > 0 ? x0 : x1 - o.x()) / d.x());
-        t1 = std::min(t1, (d.x() > 0 ? x1 : x0 - o.x()) / d.x());
+        t0 = std::max(t0, ((d.x() > 0 ? x0 : x1) - o.x()) / d.x());
+        t1 = std::min(t1, ((d.x() > 0 ? x1 : x0) - o.x()) / d.x());
     } else if (o.x() < x0 || o.x() > x1)
         return false;
 
     if (std::fabs(d.y()) > EPSILON) {
-        t0 = std::max(t0, (d.y() > 0 ? y0 : y1 - o.y()) / d.y());
-        t1 = std::min(t1, (d.y() > 0 ? y1 : y0 - o.y()) / d.y());
+        t0 = std::max(t0, ((d.y() > 0 ? y0 : y1) - o.y()) / d.y());
+        t1 = std::min(t1, ((d.y() > 0 ? y1 : y0) - o.y()) / d.y());
     } else if (o.y() < y0 || o.y() > y1)
         return false;
 
     if (std::fabs(d.z()) > EPSILON) {
-        t0 = std::max(t0, (d.z() > 0 ? z0 : z1 - o.z()) / d.z());
-        t1 = std::min(t1, (d.z() > 0 ? z1 : z0 - o.z()) / d.z());
+        t0 = std::max(t0, ((d.z() > 0 ? z0 : z1) - o.z()) / d.z());
+        t1 = std::min(t1, ((d.z() > 0 ? z1 : z0) - o.z()) / d.z());
     } else if (o.z() < z0 || o.z() > z1)
         return false;
 
-    return t0 >= 0 && t0 <= t1;
+    return t0 <= t1;
 }
