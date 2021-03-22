@@ -12,6 +12,10 @@ QVector3D Triangle::getCenter() const {
     return center;
 }
 
+float Triangle::area() const {
+    return 0.5f * QVector3D::crossProduct(p1.getPosition() - p0.getPosition(), p2.getPosition() - p0.getPosition()).length();
+}
+
 AABB Triangle::aabb() const {
     AABB ans;
     ans.add(p0.getPosition());
@@ -42,4 +46,16 @@ void Triangle::trace(const Ray &ray, float &t, QVector3D &normal) const {
         } else
             t = FLT_MAX;
     }
+}
+
+Point Triangle::sample() const {
+    float u = randomUniform(), v = randomUniform();
+    if (u + v > 1.0f) {
+        u = 1 - u;
+        v = 1 - v;
+    }
+
+    QVector3D position = (1.0f - u - v) * p0.getPosition() + u * p1.getPosition() + v * p2.getPosition();
+    QVector3D normal = ((1.0f - u - v) * p0.getNormal() + u * p1.getNormal() + v * p2.getNormal()).normalized();
+    return Point(position, normal);
 }

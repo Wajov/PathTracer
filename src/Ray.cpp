@@ -17,3 +17,7 @@ QVector3D Ray::getDirection() const {
 QVector3D Ray::point(const float t) const {
     return origin + t * direction;
 }
+
+QVector3D Ray::reflect(const QVector3D &normal) const {
+    return (direction - 2.0f * QVector3D::dotProduct(direction, normal) * normal).normalized();
+}

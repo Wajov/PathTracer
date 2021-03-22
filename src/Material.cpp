@@ -10,18 +10,12 @@ shininess(shininess) {}
 
 Material::~Material() {}
 
-QVector3D Material::getDiffuse() const {
-    return diffuse;
-}
-
-QVector3D Material::getSpecular() const {
-    return specular;
-}
-
 QVector3D Material::getEmissive() const {
     return emissive;
 }
 
-float Material::getShininess() const {
-    return shininess;
+QVector3D Material::brdf(const QVector3D &normal, const QVector3D &reflection, const QVector3D &direction) const {
+    float cosine0 = QVector3D::dotProduct(normal, direction);
+    float cosine1 = QVector3D::dotProduct(reflection, direction);
+    return diffuse * cosine0 / PI + specular * std::pow(cosine1, shininess) * (shininess + 1) / (PI * 2.0f);
 }

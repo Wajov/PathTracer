@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QPixmap>
 
+#include "ConstantHelper.h"
 #include "Scene.h"
 
 class RenderWidget : public QWidget {

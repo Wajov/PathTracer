@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include <iostream>
 
 Scene::Scene() {}
 
@@ -12,21 +13,24 @@ Scene::Scene(const std::string &path) {
 Scene::~Scene() {}
 
 void Scene::processNode(aiNode *node, const aiScene *scene, std::string &directory) {
-    for (unsigned int i = 0; i < node->mNumMeshes; i++)
+    for (int i = 0; i < node->mNumMeshes; i++) {
         meshes.push_back(processMesh(scene->mMeshes[node->mMeshes[i]], scene, directory));
-    for (unsigned int i = 0; i < node->mNumChildren; i++)
+        if (!meshes[i].getMaterial().getEmissive().isNull())
+            lights.push_back(meshes[i]);
+    }
+    for (int i = 0; i < node->mNumChildren; i++)
         processNode(node->mChildren[i], scene, directory);
 }
 
-Mesh Scene::processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory) {
+Mesh Scene::processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory) const {
     std::vector<Point> points;
-    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+    for (int i = 0; i < mesh->mNumVertices; i++) {
         QVector3D position(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         QVector3D normal(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         points.emplace_back(position, normal);
     }
     std::vector<Triangle> triangles;
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+    for (int i = 0; i < mesh->mNumFaces; i++) {
         Point p0 = points[mesh->mFaces[i].mIndices[0]];
         Point p1 = points[mesh->mFaces[i].mIndices[1]];
         Point p2 = points[mesh->mFaces[i].mIndices[2]];
@@ -68,40 +72,63 @@ QVector3D Scene::shade(const Ray &ray) const {
     Material material;
     trace(ray, t, normal, material);
 
-    if (randomUniform() > RUSSIAN_ROULETTE || t == FLT_MAX)
+    if (t == FLT_MAX)
         return QVector3D(0.0f, 0.0f, 0.0f);
 
-    QVector3D emissive = material.getEmissive();
-    if (!emissive.isNull())
-        return emissive / RUSSIAN_ROULETTE;
-
-    std::pair<float, float> pair = sampleHemisphere();
-    QVector3D tangent = std::fabs(normal.x()) < EPSILON && std::fabs(normal.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(normal.x(), -normal.y(), 0.0f).normalized();
-    QVector3D bitangent = QVector3D::crossProduct(tangent, normal);
-
     QVector3D position = ray.point(t);
-    QVector3D directionIn = (-ray.getDirection()).normalized();
-    QVector3D directionOut = (std::cos(pair.first) * normal + std::sin(pair.first) * std::cos(pair.second) * tangent + std::sin(pair.first) * std::sin(pair.second) * bitangent).normalized();
-    QVector3D half = (directionIn + directionOut).normalized();
-    QVector3D f = material.getDiffuse() + material.getSpecular() * std::pow(QVector3D::dotProduct(normal, half), material.getShininess());
+    QVector3D reflection = ray.reflect(normal);
 
-    return shade(Ray(position, directionOut)) * f * std::cos(pair.first) / (PI * 2.0f * RUSSIAN_ROULETTE);
+    QVector3D ans = material.getEmissive();
+    for (const Mesh &light : lights) {
+        QVector3D sum(0.0f, 0.0f, 0.0f);
+        for (int i = 0; i < SAMPLE_PER_LIGHT; i++) {
+            Point sample = light.sample();
+            QVector3D direction = (sample.getPosition() - position).normalized();
+
+            Ray rayTemp(position, direction);
+            float tTemp;
+            QVector3D normalTemp;
+            Material materialTemp;
+            trace(rayTemp, tTemp, normalTemp, materialTemp);
+
+//            std::cout << tTemp << std::endl;
+            if ((rayTemp.point(tTemp) - sample.getPosition()).lengthSquared() < EPSILON) {
+                QVector3D brdf = material.brdf(normal, reflection, direction);
+                float cosine0 = QVector3D::dotProduct(normal, direction);
+                float cosine1 = QVector3D::dotProduct(sample.getNormal(), -direction);
+                sum += light.getMaterial().getEmissive() * brdf * cosine0 * cosine1 / (sample.getPosition() - position).lengthSquared() * light.getArea();
+            }
+        }
+        ans += sum / SAMPLE_PER_LIGHT;
+    }
+
+    if (randomUniform() < RUSSIAN_ROULETTE) {
+        std::pair<float, float> pair = sampleHemisphere();
+        QVector3D tangent = std::fabs(normal.x()) < EPSILON && std::fabs(normal.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(normal.y(), -normal.x(), 0.0f).normalized();
+        QVector3D bitangent = QVector3D::crossProduct(tangent, normal);
+        QVector3D direction = (std::cos(pair.first) * normal + std::sin(pair.first) * std::cos(pair.second) * tangent + std::sin(pair.first) * std::sin(pair.second) * bitangent).normalized();
+        QVector3D brdf = material.brdf(normal, reflection, direction);
+
+        ans += shade(Ray(position, direction)) * brdf * std::cos(pair.first) * PI * 2.0f / RUSSIAN_ROULETTE;
+    }
+
+    return ans;
 }
 
-QImage Scene::render(const QVector3D &position, const QVector3D &center, const QVector3D &up, const float fovy, const int width, const int height) {
+QImage Scene::render(const QVector3D &position, const QVector3D &center, const QVector3D &up, const float fovy, const int width, const int height) const {
     QVector3D f = (center - position).normalized();
     QVector3D u = up.normalized();
     QVector3D l = QVector3D::crossProduct(u, f);
-    float k = 2.0f * std::tan(fovy / 360.0f * PI) / (float)height;
-    QVector3D du = u * k;
-    QVector3D dl = l * k;
+    float t = 2.0f * std::tan(fovy / 360.0f * PI) / (float)height;
+    QVector3D du = u * t;
+    QVector3D dl = l * t;
     QVector3D o = position + f + (du + dl) * (float)height * 0.5f;
 
     QImage ans(width, height, QImage::Format_RGB32);
     for (int i = 0; i < width; i++)
         for (int j = 0; j < height; j++) {
             QVector3D avg(0.0f, 0.0f, 0.0f);
-            for (int sample = 0; sample < SAMPLE_PER_PIXEL; sample++) {
+            for (int k = 0; k < SAMPLE_PER_PIXEL; k++) {
                 std::pair<float, float> pair = samplePixel();
                 QVector3D direction = (o - dl * ((float) i + pair.first) - du * ((float) j + pair.second) - position).normalized();
                 avg += shade(Ray(position, direction));

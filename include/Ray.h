@@ -13,6 +13,7 @@ public:
     QVector3D getOrigin() const;
     QVector3D getDirection() const;
     QVector3D point(const float t) const;
+    QVector3D reflect(const QVector3D &normal) const;
 };
 
 #endif

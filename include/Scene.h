@@ -24,9 +24,9 @@
 
 class Scene {
 private:
-    std::vector<Mesh> meshes;
+    std::vector<Mesh> meshes, lights;
     void processNode(aiNode *node, const aiScene *scene, std::string &directory);
-    Mesh processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory);
+    Mesh processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory) const;
     void trace(const Ray &ray, float &t, QVector3D &normal, Material &material) const;
     QVector3D shade(const Ray &ray) const;
 
@@ -34,7 +34,7 @@ public:
     Scene();
     Scene(const std::string &path);
     ~Scene();
-    QImage render(const QVector3D &position, const QVector3D &center, const QVector3D &up, const float fovy, const int width, const int height);
+    QImage render(const QVector3D &position, const QVector3D &center, const QVector3D &up, const float fovy, const int width, const int height) const;
 };
 
 #endif
