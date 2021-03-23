@@ -24,11 +24,11 @@
 
 class Scene {
 private:
-    std::vector<Mesh> meshes, lights;
+    std::vector<Mesh> meshes;
     void processNode(aiNode *node, const aiScene *scene, std::string &directory);
     Mesh processMesh(aiMesh *mesh, const aiScene *scene, std::string &directory) const;
     void trace(const Ray &ray, float &t, QVector3D &normal, Material &material) const;
-    QVector3D shade(const Ray &ray) const;
+    QVector3D shade(const Ray &ray, const float t, const QVector3D &normal, const Material &material) const;
 
 public:
     Scene();

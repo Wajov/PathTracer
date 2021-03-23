@@ -40,7 +40,7 @@ void Triangle::trace(const Ray &ray, float &t, QVector3D &normal) const {
         float tTemp = QVector3D::dotProduct(e2, s1) / w;
         float u = QVector3D::dotProduct(s, s2) / w;
         float v = QVector3D::dotProduct(d, s1) / w;
-        if (tTemp >= 0.0f && u >= 0.0f && v >= 0.0f && u + v <= 1.0f) {
+        if (tTemp > EPSILON && u >= 0.0f && v >= 0.0f && u + v <= 1.0f) {
             t = tTemp;
             normal = ((1.0f - u - v) * p0.getNormal() + u * p1.getNormal() + v * p2.getNormal()).normalized();
         } else
