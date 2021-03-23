@@ -19,10 +19,9 @@ static void samplePixel(float &x, float &y) {
     y = randomUniform();
 }
 
-static void sampleHemisphere(const float exp, float &theta, float &phi, float &pdf) {
+static void sampleHemisphere(const float exp, float &theta, float &phi) {
     theta = std::acos(std::pow(randomUniform(), 1.0f / (exp + 1.0f)));
     phi = randomUniform() * PI * 2.0f;
-    pdf = std::pow(std::cos(theta), exp) * std::sin(theta) * (exp + 1.0f) / (PI * 2.0f);
 }
 
 #endif

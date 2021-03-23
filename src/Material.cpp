@@ -33,11 +33,12 @@ float Material::getThreshold() const {
 
 QVector3D Material::brdf(const ReflectionType type, const QVector3D &normal, const QVector3D &direction) const {
     float cosine = std::max(QVector3D::dotProduct(normal, direction), 0.0f);
+    float sine = QVector3D::crossProduct(normal, direction).length();
     switch (type) {
         case DIFFUSE:
-            return diffuse * cosine / PI;
+            return diffuse / PI * sine;
         case SPECULAR:
-            return specular * std::pow(cosine, shininess) * (shininess + 1) / (PI * 2.0f);
+            return specular * std::pow(cosine, shininess) * (shininess + 1) / (PI * 2.0f) * sine;
         default:
             break;
     }

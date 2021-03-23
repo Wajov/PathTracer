@@ -13,6 +13,7 @@
 #include <QVector3D>
 #include <QImage>
 #include <QColor>
+#include <omp.h>
 
 #include "ConstantHelper.h"
 #include "SampleHelper.h"
