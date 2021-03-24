@@ -49,13 +49,9 @@ void Triangle::trace(const Ray &ray, float &t, QVector3D &normal) const {
 }
 
 Point Triangle::sample() const {
-    float u = randomUniform(), v = randomUniform();
-    if (u + v > 1.0f) {
-        u = 1.0f - u;
-        v = 1.0f - v;
-    }
+    float u = std::sqrt(randomUniform()), v = randomUniform();
 
-    QVector3D position = (1.0f - u - v) * p0.getPosition() + u * p1.getPosition() + v * p2.getPosition();
-    QVector3D normal = ((1.0f - u - v) * p0.getNormal() + u * p1.getNormal() + v * p2.getNormal()).normalized();
+    QVector3D position = (1.0f - u) * p0.getPosition() + u * (1.0f - v) * p1.getPosition() + u * v * p2.getPosition();
+    QVector3D normal = ((1.0f - u) * p0.getNormal() + u * (1.0f - v) * p1.getNormal() + u * v * p2.getNormal()).normalized();
     return Point(position, normal);
 }

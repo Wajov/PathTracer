@@ -30,7 +30,7 @@ Point Mesh::sample() const {
     float t = randomUniform() * area;
     for (int i = 0; i < triangles.size(); i++) {
         t -= areas[i];
-        if (t < 0)
+        if (t <= 0.0f)
             return triangles[i].sample();
     }
 }

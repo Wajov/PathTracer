@@ -2,6 +2,7 @@
 #define AABB_H
 
 #include <cfloat>
+#include <cmath>
 #include <algorithm>
 
 #include <QVector3D>

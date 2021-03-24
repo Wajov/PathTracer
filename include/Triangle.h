@@ -2,6 +2,7 @@
 #define TRIANGLE_H
 
 #include <cfloat>
+#include <cmath>
 
 #include <QVector3D>
 

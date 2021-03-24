@@ -62,7 +62,7 @@ void Scene::trace(const Ray &ray, float &t, QVector3D &normal, Material &materia
     }
 }
 
-QVector3D Scene::shade(const Ray &ray, const float t, const QVector3D &normal, const Material &material) const {
+QVector3D Scene::shade(const Ray &ray, const float t, const QVector3D &normal, const Material &material, const int depth) const {
     QVector3D position = ray.point(t);
     QVector3D reflection = ray.reflect(normal);
 
@@ -81,39 +81,34 @@ QVector3D Scene::shade(const Ray &ray, const float t, const QVector3D &normal, c
                 trace(rayTemp, tTemp, normalTemp, materialTemp);
 
                 if ((rayTemp.point(tTemp) - sample.getPosition()).lengthSquared() < EPSILON) {
-                    QVector3D brdf;
-//                    if (randomUniform() <= material.getThreshold())
-                        brdf = material.brdf(DIFFUSE, normal, direction);
-//                    else
-//                        brdf = material.brdf(SPECULAR, reflection, direction);
                     float cosine0 = std::max(QVector3D::dotProduct(normal, direction), 0.0f);
                     float cosine1 = std::max(QVector3D::dotProduct(sample.getNormal(), -direction), 0.0f);
-                    sum += mesh.getMaterial().getEmissive() * brdf * cosine0 * cosine1 / (sample.getPosition() - position).lengthSquared() * mesh.getArea();
+                    sum += mesh.getMaterial().getEmissive() * material.getDiffuse() * cosine0 * cosine1 * mesh.getArea() / ((sample.getPosition() - position).lengthSquared() * PI);
                 }
             }
             ans += sum / SAMPLE_PER_LIGHT;
         }
 
-    if (randomUniform() < RUSSIAN_ROULETTE) {
+    if (depth < MAX_DEPTH) {
         float theta, phi;
         QVector3D direction, albedo;
-//        if (randomUniform() <= material.getThreshold()) {
+        if (randomUniform() <= material.getThreshold()) {
             sampleHemisphere(1.0f, theta, phi);
             float cosine = std::cos(theta);
             float sine = std::sin(theta);
             QVector3D tangent = std::fabs(normal.x()) < EPSILON && std::fabs(normal.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(normal.y(), -normal.x(), 0.0f).normalized();
             QVector3D bitangent = QVector3D::crossProduct(tangent, normal);
-            direction = cosine * normal + sine * std::cos(phi) * tangent + sine * std::sin(phi) * bitangent;
+            direction = (cosine * normal + sine * std::cos(phi) * tangent + sine * std::sin(phi) * bitangent).normalized();
             albedo = material.getDiffuse();
-//        } else {
-//            sampleHemisphere(material.getShininess(), theta, phi);
-//            float cosine = std::cos(theta);
-//            float sine = std::sin(theta);
-//            QVector3D tangent = std::fabs(reflection.x()) < EPSILON && std::fabs(reflection.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(reflection.y(), -reflection.x(), 0.0f).normalized();
-//            QVector3D bitangent = QVector3D::crossProduct(tangent, reflection);
-//            direction = cosine * reflection + sine * std::cos(phi) * tangent + sine * std::sin(phi) * bitangent;
-//            albedo = material.getSpecular() * std::max(QVector3D::dotProduct(normal, direction), 0.0f);
-//        }
+        } else {
+            sampleHemisphere(material.getShininess(), theta, phi);
+            float cosine = std::cos(theta);
+            float sine = std::sin(theta);
+            QVector3D tangent = std::fabs(reflection.x()) < EPSILON && std::fabs(reflection.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(reflection.y(), -reflection.x(), 0.0f).normalized();
+            QVector3D bitangent = QVector3D::crossProduct(tangent, reflection);
+            direction = (cosine * reflection + sine * std::cos(phi) * tangent + sine * std::sin(phi) * bitangent).normalized();
+            albedo = material.getSpecular() * std::max(QVector3D::dotProduct(normal, direction), 0.0f);
+        }
 
         Ray rayTemp(position, direction);
         float tTemp;
@@ -121,10 +116,8 @@ QVector3D Scene::shade(const Ray &ray, const float t, const QVector3D &normal, c
         Material materialTemp;
         trace(rayTemp, tTemp, normalTemp, materialTemp);
 
-        if (tTemp < FLT_MAX && materialTemp.getEmissive().isNull()) {
-            float cosine = std::max(QVector3D::dotProduct(normal, direction), 0.0f);
-            ans += shade(rayTemp, tTemp, normalTemp, materialTemp) * albedo/* * cosine*/ / RUSSIAN_ROULETTE;
-        }
+        if (tTemp < FLT_MAX && materialTemp.getEmissive().isNull())
+            ans += shade(rayTemp, tTemp, normalTemp, materialTemp, depth + 1) * albedo;
     }
 
     return ans;
@@ -160,7 +153,7 @@ QImage Scene::render(const QVector3D &position, const QVector3D &center, const Q
                 if (!material.getEmissive().isNull())
                     avg += material.getEmissive();
                 else
-                    avg += shade(ray, t, normal, material);
+                    avg += shade(ray, t, normal, material, 0);
             }
             avg /= SAMPLE_PER_PIXEL;
             int r = std::min((int)(avg.x() * 255), 255);

@@ -26,7 +26,6 @@ public:
     QVector3D getEmissive() const;
     float getShininess() const;
     float getThreshold() const;
-    QVector3D brdf(const ReflectionType type, const QVector3D &normal, const QVector3D &direction) const;
 };
 
 #endif
