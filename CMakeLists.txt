@@ -6,13 +6,15 @@ set(CMAKE_AUTOMOC ON)
 include_directories(include)
 set(HEADER
         include/ConstantHelper.h
-        include/SampleHelper.h
+        include/UtilsHelper.h
         include/Point.h
         include/Triangle.h
         include/AABB.h
         include/BVH.h
         include/Material.h
+        include/Texture.h
         include/Mesh.h
+        include/Environment.h
         include/Scene.h
         include/Ray.h
         include/RenderWidget.h

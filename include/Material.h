@@ -7,11 +7,6 @@
 
 #include "ConstantHelper.h"
 
-enum ReflectionType {
-    DIFFUSE,
-    SPECULAR
-};
-
 class Material {
 private:
     QVector3D diffuse, specular, emissive;

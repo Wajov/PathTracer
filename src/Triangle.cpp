@@ -24,7 +24,7 @@ AABB Triangle::aabb() const {
     return ans;
 }
 
-void Triangle::trace(const Ray &ray, float &t, QVector3D &normal) const {
+void Triangle::trace(const Ray &ray, float &t, Point &point) const {
     QVector3D o = ray.getOrigin();
     QVector3D d = ray.getDirection();
     QVector3D e1 = p1.getPosition() - p0.getPosition();
@@ -42,7 +42,10 @@ void Triangle::trace(const Ray &ray, float &t, QVector3D &normal) const {
         float v = QVector3D::dotProduct(d, s1) / w;
         if (tTemp > EPSILON && u >= 0.0f && v >= 0.0f && u + v <= 1.0f) {
             t = tTemp;
-            normal = ((1.0f - u - v) * p0.getNormal() + u * p1.getNormal() + v * p2.getNormal()).normalized();
+            QVector3D position = ray.point(t);
+            QVector3D normal = ((1.0f - u - v) * p0.getNormal() + u * p1.getNormal() + v * p2.getNormal()).normalized();
+            QVector2D uv = (1.0f - u - v) * p0.getUV() + u * p1.getUV() + v * p2.getUV();
+            point = Point(position, normal, uv);
         } else
             t = FLT_MAX;
     }
@@ -53,5 +56,6 @@ Point Triangle::sample() const {
 
     QVector3D position = (1.0f - u) * p0.getPosition() + u * (1.0f - v) * p1.getPosition() + u * v * p2.getPosition();
     QVector3D normal = ((1.0f - u) * p0.getNormal() + u * (1.0f - v) * p1.getNormal() + u * v * p2.getNormal()).normalized();
-    return Point(position, normal);
+    QVector2D uv = (1.0f - u) * p0.getUV() + u * (1.0f - v) * p1.getUV() + u * v * p2.getUV();
+    return Point(position, normal, uv);
 }

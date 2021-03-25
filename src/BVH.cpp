@@ -47,30 +47,30 @@ bool BVH::compareByZ(const Triangle &t0, const Triangle &t1) {
     return t0.getCenter().z() < t1.getCenter().z();
 }
 
-void BVH::trace(const Ray &ray, float &t, QVector3D &normal) const {
+void BVH::trace(const Ray &ray, float &t, Point &point) const {
     if (!aabb.trace(ray))
         t = FLT_MAX;
     else if (left != nullptr || right != nullptr) {
         float tLeft, tRight;
-        QVector3D normalLeft, normalRight;
-        left->trace(ray, tLeft, normalLeft);
-        right->trace(ray, tRight, normalRight);
+        Point pointLeft, pointRight;
+        left->trace(ray, tLeft, pointLeft);
+        right->trace(ray, tRight, pointRight);
         if (tLeft < tRight) {
             t = tLeft;
-            normal = normalLeft;
+            point = pointLeft;
         } else {
             t = tRight;
-            normal = normalRight;
+            point = pointRight;
         }
     } else {
         t = FLT_MAX;
         for (const Triangle &triangle : triangles) {
             float tTemp;
-            QVector3D normalTemp;
-            triangle.trace(ray, tTemp, normalTemp);
+            Point pointTemp;
+            triangle.trace(ray, tTemp, pointTemp);
             if (tTemp < t) {
                 t = tTemp;
-                normal = normalTemp;
+                point = pointTemp;
             }
         }
     }

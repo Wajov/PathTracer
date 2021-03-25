@@ -5,9 +5,10 @@
 #include <cmath>
 
 #include <QVector3D>
+#include <QVector2D>
 
 #include "ConstantHelper.h"
-#include "SampleHelper.h"
+#include "UtilsHelper.h"
 #include "Point.h"
 #include "AABB.h"
 #include "Ray.h"
@@ -23,7 +24,7 @@ public:
     QVector3D getCenter() const;
     float area() const;
     AABB aabb() const;
-    void trace(const Ray &ray, float &t, QVector3D &normal) const;
+    void trace(const Ray &ray, float &t, Point &point) const;
     Point sample() const;
 };
 
