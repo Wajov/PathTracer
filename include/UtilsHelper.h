@@ -4,6 +4,7 @@
 #include <random>
 #include <ctime>
 #include <cmath>
+#include <iostream>
 
 #include <QVector3D>
 #include <QColor>
@@ -34,8 +35,10 @@ static float randomUniform() {
 }
 
 static void samplePixel(float &x, float &y) {
-    x = randomUniform();
-    y = randomUniform();
+    int xt = (int)(randomUniform() * STRATIFY_SIZE);
+    int yt = (int)(randomUniform() * STRATIFY_SIZE);
+    x = ((float)xt + randomUniform()) / STRATIFY_SIZE;
+    y = ((float)yt + randomUniform()) / STRATIFY_SIZE;
 }
 
 static void sampleHemisphere(const float exp, float &theta, float &phi) {

@@ -109,7 +109,7 @@ QVector3D Scene::shade(const Ray &ray, const Point &point, const Material &mater
                 if ((rayTemp.point(tTemp) - sample.getPosition()).lengthSquared() < EPSILON) {
                     float cosine0 = std::max(QVector3D::dotProduct(normal, direction), 0.0f);
                     float cosine1 = std::max(QVector3D::dotProduct(sample.getNormal(), -direction), 0.0f);
-                    sum += mesh.getMaterial().getEmissive() * material.getDiffuse() * color * cosine0 * cosine1 * mesh.getArea() / (sample.getPosition() - position).lengthSquared();
+                    sum += mesh.getMaterial().getEmissive() * material.getDiffuse() * color * cosine0 * cosine1 * mesh.getArea() / ((sample.getPosition() - position).lengthSquared() * PI);
                 }
             }
             ans += sum / SAMPLE_PER_LIGHT;
@@ -123,7 +123,16 @@ QVector3D Scene::shade(const Ray &ray, const Point &point, const Material &mater
             float cosine = std::cos(theta);
             float sine = std::sin(theta);
             QVector3D direction = cosine * normal + sine * std::cos(phi) * tangent + sine * std::sin(phi) * bitangent;
-            sum += environment.color(direction) * material.getDiffuse() * color * cosine * PI * 2.0f;
+
+            Ray rayTemp(position, direction);
+            float tTemp;
+            Point pointTemp;
+            Material materialTemp;
+            QVector3D colorTemp;
+            trace(rayTemp, tTemp, pointTemp, materialTemp, colorTemp);
+
+            if (tTemp == FLT_MAX)
+                sum += environment.color(direction) * material.getDiffuse() * color * cosine * 2.0f;
         }
         ans += sum / SAMPLE_PER_LIGHT;
     }
@@ -154,9 +163,7 @@ QVector3D Scene::shade(const Ray &ray, const Point &point, const Material &mater
         QVector3D colorTemp;
         trace(rayTemp, tTemp, pointTemp, materialTemp, colorTemp);
 
-        if (tTemp == FLT_MAX)
-            ans += environment.color(direction) * albedo;
-        else if (materialTemp.getEmissive().isNull())
+        if (tTemp < FLT_MAX && materialTemp.getEmissive().isNull())
             ans += shade(rayTemp, pointTemp, materialTemp, colorTemp, depth + 1) * albedo;
     }
 
@@ -191,7 +198,7 @@ QImage Scene::render(const QVector3D &position, const QVector3D &center, const Q
 
                 if (t == FLT_MAX)
                     avg += environment.color(direction);
-                if (!material.getEmissive().isNull())
+                else if (!material.getEmissive().isNull())
                     avg += material.getEmissive();
                 else
                     avg += shade(ray, point, material, color, 0);
