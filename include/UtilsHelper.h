@@ -4,12 +4,11 @@
 #include <random>
 #include <ctime>
 #include <cmath>
-#include <iostream>
 
 #include <QVector3D>
 #include <QColor>
 
-#include "ConstantHelper.h"
+#include "ConfigHelper.h"
 
 static std::default_random_engine engine(std::time(nullptr));
 static std::uniform_real_distribution<float> uniform(0.0f, 1.0f);
@@ -23,11 +22,16 @@ static QVector3D colorToVector(const QColor &color) {
 }
 
 static QColor vectorToColor(const QVector3D &vector) {
-    int r = std::min((int)(std::pow(vector.x(), 1.0f / 2.2f) * 255), 255);
-    int g = std::min((int)(std::pow(vector.y(), 1.0f / 2.2f) * 255), 255);
-    int b = std::min((int)(std::pow(vector.z(), 1.0f / 2.2f) * 255), 255);
+    int r = std::min((int)(std::pow(vector.x(), 1.0f / GAMMA) * 255), 255);
+    int g = std::min((int)(std::pow(vector.y(), 1.0f / GAMMA) * 255), 255);
+    int b = std::min((int)(std::pow(vector.z(), 1.0f / GAMMA) * 255), 255);
 
     return QColor(r, g, b);
+}
+
+static void calculateTangentSpace(const QVector3D &normal, QVector3D &tangent, QVector3D &bitangent) {
+    tangent = std::fabs(normal.x()) < EPSILON && std::fabs(normal.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(normal.y(), -normal.x(), 0.0f).normalized();
+    bitangent = QVector3D::crossProduct(tangent, normal);
 }
 
 static float randomUniform() {

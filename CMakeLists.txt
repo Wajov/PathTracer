@@ -5,7 +5,7 @@ set(CMAKE_AUTOMOC ON)
 
 include_directories(include)
 set(HEADER
-        include/ConstantHelper.h
+        include/ConfigHelper.h
         include/UtilsHelper.h
         include/Point.h
         include/Triangle.h

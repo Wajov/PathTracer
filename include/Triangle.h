@@ -7,7 +7,7 @@
 #include <QVector3D>
 #include <QVector2D>
 
-#include "ConstantHelper.h"
+#include "ConfigHelper.h"
 #include "UtilsHelper.h"
 #include "Point.h"
 #include "AABB.h"

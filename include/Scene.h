@@ -6,7 +6,6 @@
 #include <string>
 #include <algorithm>
 #include <vector>
-#include <iostream>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -18,7 +17,7 @@
 #include <QColor>
 #include <omp.h>
 
-#include "ConstantHelper.h"
+#include "ConfigHelper.h"
 #include "UtilsHelper.h"
 #include "Point.h"
 #include "Triangle.h"
@@ -36,13 +35,13 @@ private:
     Mesh processMesh(const aiMesh *mesh, const aiScene *scene, const std::string &directory) const;
     Texture processTexture(const aiMaterial *material, const std::string &directory) const;
     void trace(const Ray &ray, float &t, Point &point, Material &material, QVector3D &color) const;
-    QVector3D shade(const Ray &ray, const Point &point, const Material &material, const QVector3D &color, const int depth) const;
+    QVector3D shade(const Ray &ray, const Point &point, const Material &material, const QVector3D &color, const int bounce) const;
 
 public:
     Scene();
     Scene(const std::string &meshPath, const std::string &environmentPath = "");
     ~Scene();
-    QImage render(const QVector3D &position, const QVector3D &center, const QVector3D &up, const float fovy, const int width, const int height) const;
+    void sample(const QVector3D &position, const QVector3D &o, const QVector3D &du, const QVector3D &dl, std::vector<std::vector<QVector3D>> &sum);
 };
 
 #endif

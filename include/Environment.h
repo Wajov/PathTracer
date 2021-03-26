@@ -6,7 +6,7 @@
 #include <QImage>
 #include <QVector3D>
 
-#include "ConstantHelper.h"
+#include "ConfigHelper.h"
 #include "Texture.h"
 
 class Environment {

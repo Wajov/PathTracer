@@ -84,14 +84,12 @@ void Scene::trace(const Ray &ray, float &t, Point &point, Material &material, QV
     }
 }
 
-QVector3D Scene::shade(const Ray &ray, const Point &point, const Material &material, const QVector3D &color, const int depth) const {
+QVector3D Scene::shade(const Ray &ray, const Point &point, const Material &material, const QVector3D &color, const int bounce) const {
     QVector3D position = point.getPosition();
     QVector3D normal = point.getNormal();
-    QVector3D tangent = std::fabs(normal.x()) < EPSILON && std::fabs(normal.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(normal.y(), -normal.x(), 0.0f).normalized();
-    QVector3D bitangent = QVector3D::crossProduct(tangent, normal);
     QVector3D reflection = ray.reflect(normal);
 
-    QVector3D ans(0.0f, 0.0f, 0.0f);
+    QVector3D ans = material.getEmissive();
     for (const Mesh &mesh : meshes)
         if (!mesh.getMaterial().getEmissive().isNull()) {
             QVector3D sum(0.0f, 0.0f, 0.0f);
@@ -109,20 +107,22 @@ QVector3D Scene::shade(const Ray &ray, const Point &point, const Material &mater
                 if ((rayTemp.point(tTemp) - sample.getPosition()).lengthSquared() < EPSILON) {
                     float cosine0 = std::max(QVector3D::dotProduct(normal, direction), 0.0f);
                     float cosine1 = std::max(QVector3D::dotProduct(sample.getNormal(), -direction), 0.0f);
-                    sum += mesh.getMaterial().getEmissive() * material.getDiffuse() * color * cosine0 * cosine1 * mesh.getArea() / ((sample.getPosition() - position).lengthSquared() * PI);
+                    QVector3D brdf;
+                    if (randomUniform() <= material.getThreshold())
+                        brdf = material.diffuseBRDF() * color;
+                    else
+                        brdf = material.specularBRDF(reflection, direction);
+                    sum += mesh.getMaterial().getEmissive() * brdf * cosine0 * cosine1 * mesh.getArea() / (sample.getPosition() - position).lengthSquared();
                 }
             }
-            ans += sum / SAMPLE_PER_LIGHT;
+            ans += sum / (float)SAMPLE_PER_LIGHT;
         }
 
     if (!environment.isNull()) {
         QVector3D sum(0.0f, 0.0f, 0.0f);
         for (int i = 0; i < SAMPLE_PER_LIGHT; i++) {
-            float theta, phi;
-            sampleHemisphere(0.0f, theta, phi);
-            float cosine = std::cos(theta);
-            float sine = std::sin(theta);
-            QVector3D direction = cosine * normal + sine * std::cos(phi) * tangent + sine * std::sin(phi) * bitangent;
+            QVector3D direction, albedo;
+            material.sample(normal, reflection, color, direction, albedo);
 
             Ray rayTemp(position, direction);
             float tTemp;
@@ -132,29 +132,14 @@ QVector3D Scene::shade(const Ray &ray, const Point &point, const Material &mater
             trace(rayTemp, tTemp, pointTemp, materialTemp, colorTemp);
 
             if (tTemp == FLT_MAX)
-                sum += environment.color(direction) * material.getDiffuse() * color * cosine * 2.0f;
+                sum += environment.color(direction) * albedo;
         }
-        ans += sum / SAMPLE_PER_LIGHT;
+        ans += sum / (float)SAMPLE_PER_LIGHT;
     }
 
-    if (depth < MAX_DEPTH) {
-        float theta, phi;
+    if (bounce < RUSSIAN_ROULETTE_THRESHOLD || randomUniform() < RUSSIAN_ROULETTE_PROBABILITY) {
         QVector3D direction, albedo;
-        if (randomUniform() <= material.getThreshold()) {
-            sampleHemisphere(1.0f, theta, phi);
-            float cosine = std::cos(theta);
-            float sine = std::sin(theta);
-            direction = cosine * normal + sine * std::cos(phi) * tangent + sine * std::sin(phi) * bitangent;
-            albedo = material.getDiffuse() * color;
-        } else {
-            sampleHemisphere(material.getShininess(), theta, phi);
-            float cosine = std::cos(theta);
-            float sine = std::sin(theta);
-            QVector3D tangentReflection = std::fabs(reflection.x()) < EPSILON && std::fabs(reflection.y()) < EPSILON ? QVector3D(1.0f, 0.0f, 0.0f) : QVector3D(reflection.y(), -reflection.x(), 0.0f).normalized();
-            QVector3D bitangentReflection = QVector3D::crossProduct(tangentReflection, reflection);
-            direction = cosine * reflection + sine * std::cos(phi) * tangentReflection + sine * std::sin(phi) * bitangentReflection;
-            albedo = material.getSpecular() * std::max(QVector3D::dotProduct(normal, direction), 0.0f);
-        }
+        material.sample(normal, reflection, color, direction, albedo);
 
         Ray rayTemp(position, direction);
         float tTemp;
@@ -164,49 +149,32 @@ QVector3D Scene::shade(const Ray &ray, const Point &point, const Material &mater
         trace(rayTemp, tTemp, pointTemp, materialTemp, colorTemp);
 
         if (tTemp < FLT_MAX && materialTemp.getEmissive().isNull())
-            ans += shade(rayTemp, pointTemp, materialTemp, colorTemp, depth + 1) * albedo;
+            ans += shade(rayTemp, pointTemp, materialTemp, colorTemp, bounce + 1) * albedo / (bounce < RUSSIAN_ROULETTE_THRESHOLD ? 1.0f : RUSSIAN_ROULETTE_PROBABILITY);
     }
 
     return ans;
 }
 
-QImage Scene::render(const QVector3D &position, const QVector3D &center, const QVector3D &up, const float fovy, const int width, const int height) const {
-    QVector3D f = (center - position).normalized();
-    QVector3D u = up.normalized();
-    QVector3D l = QVector3D::crossProduct(u, f);
-    float scale = 2.0f * std::tan(fovy / 360.0f * PI) / (float)height;
-    QVector3D du = u * scale;
-    QVector3D dl = l * scale;
-    QVector3D o = position + f + (du * (float)height + dl * (float)width) * 0.5f;
+void Scene::sample(const QVector3D &position, const QVector3D &o, const QVector3D &du, const QVector3D &dl, std::vector<std::vector<QVector3D>> &sum) {
+    #pragma omp parallel for default(none) shared(position, o, du, dl, sum)
+    for (int i = 0; i < sum.size(); i++)
+        for (int j = 0; j < sum[i].size(); j++) {
+            float x, y;
+            samplePixel(x, y);
+            QVector3D direction = (o - dl * ((float) i + x) - du * ((float) j + y) - position).normalized();
 
-    QImage ans(width, height, QImage::Format_RGB32);
-    #pragma omp parallel for
-    for (int i = 0; i < width; i++)
-        for (int j = 0; j < height; j++) {
-            QVector3D avg(0.0f, 0.0f, 0.0f);
-            for (int k = 0; k < SAMPLE_PER_PIXEL; k++) {
-                float x, y;
-                samplePixel(x, y);
-                QVector3D direction = (o - dl * ((float) i + x) - du * ((float) j + y) - position).normalized();
+            Ray ray(position, direction);
+            float t;
+            Point point;
+            Material material;
+            QVector3D color;
+            trace(ray, t, point, material, color);
 
-                Ray ray(position, direction);
-                float t;
-                Point point;
-                Material material;
-                QVector3D color;
-                trace(ray, t, point, material, color);
-
-                if (t == FLT_MAX)
-                    avg += environment.color(direction);
-                else if (!material.getEmissive().isNull())
-                    avg += material.getEmissive();
-                else
-                    avg += shade(ray, point, material, color, 0);
-            }
-            avg /= SAMPLE_PER_PIXEL;
-
-            ans.setPixel(i, j, vectorToColor(avg).rgb());
+            if (t == FLT_MAX)
+                sum[i][j] += environment.color(direction);
+            else if (!material.getEmissive().isNull())
+                sum[i][j] += material.getEmissive();
+            else
+                sum[i][j] += shade(ray, point, material, color, 0);
         }
-
-    return ans;
 }

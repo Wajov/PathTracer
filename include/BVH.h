@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "ConstantHelper.h"
+#include "ConfigHelper.h"
 #include "Point.h"
 #include "Triangle.h"
 #include "AABB.h"

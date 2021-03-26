@@ -7,7 +7,7 @@
 
 #include <QVector3D>
 
-#include "ConstantHelper.h"
+#include "ConfigHelper.h"
 #include "Ray.h"
 
 class AABB {
