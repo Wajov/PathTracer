@@ -1,6 +1,6 @@
 # This file uses centimeters as units for non-parametric coordinates.
 
-mtllib scene02.mtl
+mtllib extra.mtl
 g default
 v -14.413686 -0.000000 21.736492
 v 14.413686 -0.000000 21.736492

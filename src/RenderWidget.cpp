@@ -12,6 +12,8 @@ RenderWidget::RenderWidget() : QWidget() {
     sceneButton2.setText("Car (Config 2)");
     sceneButton3.setParent(this);
     sceneButton3.setText("Dining Room");
+    sceneButton4.setParent(this);
+    sceneButton4.setText("Extra Scene");
 
     parameterLabel.setParent(this);
     parameterLabel.setText("Parameters:");
@@ -52,6 +54,7 @@ RenderWidget::RenderWidget() : QWidget() {
     vertical.addWidget(&sceneButton1);
     vertical.addWidget(&sceneButton2);
     vertical.addWidget(&sceneButton3);
+    vertical.addWidget(&sceneButton4);
     vertical.addWidget(&parameterLabel);
     vertical.addLayout(&grid);
     vertical.addWidget(&iterationLabel);
@@ -115,6 +118,14 @@ void RenderWidget::calculate() {
         up = QVector3D(0.0f, 0.985f, -0.174f);
         fovy = 45.0f;
         width = 1280;
+        height = 720;
+    } else if (sceneButton4.isChecked()) {
+        scene = Scene("scene/extra/extra.obj");
+        position = QVector3D(2.0f, 11.464f, 23.8682f);
+        center = QVector3D(2.0f, 9.464f, 18.8682f);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        fovy = 50.0f;
+        width = 720;
         height = 720;
     }
 

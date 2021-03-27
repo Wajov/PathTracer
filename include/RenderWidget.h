@@ -29,7 +29,7 @@ private:
     QHBoxLayout horizontal;
     QGridLayout grid;
     QLabel sceneLabel, parameterLabel, sppLabel, splLabel, iprLabel, iterationLabel, imageLabel;
-    QRadioButton sceneButton0, sceneButton1, sceneButton2, sceneButton3;
+    QRadioButton sceneButton0, sceneButton1, sceneButton2, sceneButton3, sceneButton4;
     QLineEdit sppEdit, splEdit, iprEdit;
     QIntValidator validator;
     QPushButton calculateButton, saveButton;
